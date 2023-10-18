@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Example of failing Inngest v3
 
-## Getting Started
+Node version v20.8.1, npm version 10.1.0 both installed using Homebrew on an M1 Macbook Air running macOS 14.0.
 
-First, run the development server:
+Checkout this code and run `npm install`. Then start the servers, run both commands:
 
-```bash
+```sh
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run inngest
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open the [Inngest dev server](http://localhost:8288) and submit a hello world event from the function list.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Alternatively run this cURL command:
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+```sh
+curl -X POST --data '{"name":"test/hello.world", "data": {"name":"vick"}}' http://localhost:8288/e/1a2a1e58
+```
 
-## Learn More
+When the `helloWorld` function is invoked, it reports the following error on the nextjs output and in the Inngest dev UI.
 
-To learn more about Next.js, take a look at the following resources:
+If the `step.sleep()` call is commented out, the function will complete. This error happens on any `step.*` calls.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```log
+[Inngest] debug - registered inngest functions: 200 OK { ok: true }
+inngest:01HD1SJSHXRHB43V8GSFX0NP94 created new V1 execution for run; +0ms discovering steps
+inngest:01HD1SJSHXRHB43V8GSFX0NP94 existing state keys: +1ms []
+inngest:01HD1SJSHXRHB43V8GSFX0NP94 starting V1 execution +0ms
+inngest:01HD1SJSHXRHB43V8GSFX0NP94 checkpoint: +6ms {
+  type: 'steps-found',
+  steps: [
+  {
+  id: 'sleep-before-hello',
+  op: 'Sleep',
+  name: '1s',
+  displayName: 'sleep-before-hello',
+  hashedId: '9dfe7fac04f3ea88a48e6975785ecbcb69d01e47',
+  fn: undefined,
+  fulfilled: false,
+  handled: false,
+  handle: [Function: handle]
+}
+]
+}
+inngest:01HD1SJSHXRHB43V8GSFX0NP94 result: +0ms {
+  type: 'steps-found',
+  steps: [
+  {
+  displayName: 'sleep-before-hello',
+  op: 'Sleep',
+  id: '9dfe7fac04f3ea88a48e6975785ecbcb69d01e47',
+  name: '1s',
+  opts: undefined
+}
+]
+}
+[Inngest] debug - registered inngest functions: 200 OK { ok: true }
+inngest:01HD1SJSHXRHB43V8GSFX0NP94 starting V0 execution +0ms
+ [NonRetriableError: =================================================
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+❌  Your function was stopped from running
+    at prettyError (webpack-internal:///(rsc)/./node_modules/inngest/helpers/errors.js:242:23)
+    at V0InngestExecution._V0InngestExecution_start (webpack-internal:///(rsc)/./node_modules/inngest/components/execution/v0.js:100:98)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async InngestCommHandler.handleAction (webpack-internal:///(rsc)/./node_modules/inngest/components/InngestCommHandler.js:307:36)
+    at async ServerTiming.wrap (webpack-internal:///(rsc)/./node_modules/inngest/helpers/ServerTiming.js:70:20)
 
-## Deploy on Vercel
+We couldn't resume your function's state because it may have changed since the run started or there are async actions in-between steps that we haven't noticed in previous executions. Continuing to run the function may result in unexpected behaviour, so we've stopped your function to ensure nothing unexpected happened!
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Ensure that your function is either entirely step-based or entirely non-step-based, by either wrapping all asynchronous logic in `step.run()` calls or by removing all `step.*()` calls.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+For more information on why step functions work in this manner, see https://www.inngest.com/docs/functions/multi-step#gotchas
+
+Code: NON_DETERMINISTIC_FUNCTION
+
+=================================================] {
+  cause: undefined,
+  name: 'NonRetriableError'
+}
+inngest:01HD1SJSHXRHB43V8GSFX0NP94 result: +6ms {
+  type: 'function-rejected',
+  error: {
+  name: 'NonRetriableError',
+  message: '=================================================\n\n❌  Your function was stopped from running\n    at prettyError (webpack-internal:///(rsc)/./node_modules/inngest/helpers/errors.js:242:23)\n    at V0InngestExecution._V0InngestExecution_start (webpack-internal:///(rsc)/./node_modules/inngest/components/execution/v0.js:100:98)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async InngestCommHandler.handleAction (webpack-internal:///(rsc)/./node_modules/inngest/components/InngestCommHandler.js:307:36)\n    at async ServerTiming.wrap (webpack-internal:///(rsc)/./node_modules/inngest/helpers/ServerTiming.js:70:20)\n\nWe couldn\'t resume your function\'s state because it may have changed since the run started or there are async actions in-between steps that we haven\'t noticed in previous executions. Continuing to run the function may result in unexpected behaviour, so we\'ve stopped your function to ensure nothing unexpected happened!\n\nEnsure that your function is either entirely step-based or entirely non-step-based, by either wrapping all asynchronous logic in `step.run()` calls or by removing all `step.*()` calls.\n\nFor more information on why step functions work in this manner, see https://www.inngest.com/docs/functions/multi-step#gotchas\n\nCode: NON_DETERMINISTIC_FUNCTION\n\n=================================================',
+  stack: 'NonRetriableError: =================================================\n\n❌  Your function was stopped from running\n    at prettyError (webpack-internal:///(rsc)/./node_modules/inngest/helpers/errors.js:242:23)\n    at V0InngestExecution._V0InngestExecution_start (webpack-internal:///(rsc)/./node_modules/inngest/components/execution/v0.js:100:98)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async InngestCommHandler.handleAction (webpack-internal:///(rsc)/./node_modules/inngest/components/InngestCommHandler.js:307:36)\n    at async ServerTiming.wrap (webpack-internal:///(rsc)/./node_modules/inngest/helpers/ServerTiming.js:70:20)\n\nWe couldn\'t resume your function\'s state because it may have changed since the run started or there are async actions in-between steps that we haven\'t noticed in previous executions. Continuing to run the function may result in unexpected behaviour, so we\'ve stopped your function to ensure nothing unexpected happened!\n\nEnsure that your function is either entirely step-based or entirely non-step-based, by either wrapping all asynchronous logic in `step.run()` calls or by removing all `step.*()` calls.\n\nFor more information on why step functions work in this manner, see https://www.inngest.com/docs/functions/multi-step#gotchas\n\nCode: NON_DETERMINISTIC_FUNCTION\n\n=================================================\n    at V0InngestExecution._V0InngestExecution_start (webpack-internal:///(rsc)/./node_modules/inngest/components/execution/v0.js:100:31)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async InngestCommHandler.handleAction (webpack-internal:///(rsc)/./node_modules/inngest/components/InngestCommHandler.js:307:36)\n    at async ServerTiming.wrap (webpack-internal:///(rsc)/./node_modules/inngest/helpers/ServerTiming.js:70:20)',
+  __serialized: true
+},
+  retriable: false
+}
+[Inngest] debug - registered inngest functions: 200 OK { ok: true }
+```
