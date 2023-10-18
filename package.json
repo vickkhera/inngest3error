@@ -4,21 +4,24 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "inngest": "inngest dev --no-discovery -u http://localhost:3000/api/inngest",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "inngest": "^3.2.1",
+    "next": "13.5.5",
     "react": "^18",
-    "react-dom": "^18",
-    "next": "13.5.5"
+    "react-dom": "^18"
   },
   "devDependencies": {
-    "typescript": "^5",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",
-    "eslint-config-next": "13.5.5"
+    "eslint-config-next": "13.5.5",
+    "inngest-cli": "^0.19.0",
+    "typescript": "^5"
   }
 }
